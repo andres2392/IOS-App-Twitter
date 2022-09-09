@@ -12,6 +12,7 @@ struct LoginView: View {
     // MARK: - PROPERTIES
     @State private var email = ""
     @State private var password = ""
+    @EnvironmentObject var viewModel: AuthViewModel
     
     
     var body: some View {
@@ -19,23 +20,7 @@ struct LoginView: View {
         VStack{
             
             // Header View
-            VStack(alignment: .leading){
-                HStack{ Spacer() }
-                
-                Text("Hello.")
-                    .font(.largeTitle)
-                    .fontWeight(.semibold)
-                
-                Text("Welcome Back")
-                    .font(.largeTitle)
-                    .fontWeight(.semibold)
-                
-            }//:VSTACK BLUE HEADER
-            .frame(height: 260)
-            .padding(.leading)
-            .background(Color(.systemBlue))
-            .foregroundColor(.white)
-            .clipShape(RoundedShape(corners: [.bottomRight]))
+            AuthHeaderView(title1: "Hello", title2: "Welcome Back!")
             
             VStack(spacing: 40){
                 CustomInputField(imageName: "envelope",
@@ -44,6 +29,7 @@ struct LoginView: View {
                 
                 CustomInputField(imageName: "lock",
                                  placeholderText: "Password",
+                                 isSecureField: true,
                                  text: $password)
             }//: VSTACK INPUTS
             .padding(.horizontal, 32)
@@ -65,7 +51,7 @@ struct LoginView: View {
             }//: HSTACK FORGOT PASSWORD
             
             Button{
-                print("Sign in Here")
+                viewModel.login(withEmail: email, password: password)
             }label: {
                 Text("Sign In")
                     .font(.headline)
