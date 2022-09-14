@@ -12,11 +12,14 @@ class AuthViewModel: ObservableObject {
     // MARK: - PROPERTIES
     @Published var userSession: FirebaseAuth.User?
     @Published var didAuthenticateUser = false
+    @Published var currentUser: User?
+    private var tempUserSession: FirebaseAuth.User?
+    
+    private let service = UserService()
     
     init(){
         self.userSession = Auth.auth().currentUser
-        
-        print("DEBUG: User session is \(self.userSession?.uid)")
+        self.fetchUser()
     }
     
     func login(withEmail email: String, password: String){
@@ -28,7 +31,7 @@ class AuthViewModel: ObservableObject {
             
             guard let user  = result?.user else { return}
             self.userSession = user
-            print("DEBUG: Did log user in...")
+            self.fetchUser()
             
         }
     }
@@ -41,10 +44,9 @@ class AuthViewModel: ObservableObject {
             }
             
             guard let user  = result?.user else { return}
+            self.tempUserSession = user
             
-            print("DEBUG: Registered user successfully")
-            print("DEBUG: User is \(self.userSession)")
-            
+           
             let data = ["email": email,
                         "username": username.lowercased(),
                         "fullname": fullname,
@@ -68,4 +70,25 @@ class AuthViewModel: ObservableObject {
         try? Auth.auth().signOut()
     }
     
+    func uploadProfileImage(_ image: UIImage) {
+        guard let uid = tempUserSession?.uid else { return }
+        
+        ImageUploader.uploadImage(image: image){ profileImageUrl in
+            Firestore.firestore().collection("users")
+                .document(uid)
+                .updateData(["profileImageUrl": profileImageUrl]){ _ in
+                    self.userSession = self.tempUserSession
+                    self.fetchUser()
+                }
+        }
+        
+    }
+    
+    func fetchUser(){
+        guard let uid = self.userSession?.uid else {return }
+        
+        service.fetchUser(withUid: uid) { user in
+            self.currentUser = user
+        }
+    }
 }

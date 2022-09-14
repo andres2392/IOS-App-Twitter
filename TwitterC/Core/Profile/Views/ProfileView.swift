@@ -6,12 +6,18 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct ProfileView: View {
     // MARK: - PROPERTIES
     @State private var selectedFilter: TweetFilterViewModel = .tweets
+    @ObservedObject var viewModel: ProfileViewModel
     @Environment(\.presentationMode) var mode
     @Namespace var animation
+    
+    init(user: User){
+        self.viewModel = ProfileViewModel(user: user)
+    }
     
     // MARK: - BODY
     var body: some View {
@@ -28,14 +34,19 @@ struct ProfileView: View {
 
             Spacer()
             
-        }//: VSTACK HEADER
+        }//: VSTACK HEADER\
+        .navigationBarHidden(true)
     }
 }
 
 // MARK: - PREVIEW
 struct ProfileView_Previews: PreviewProvider {
     static var previews: some View {
-        ProfileView()
+        ProfileView(user:  User(id: NSUUID().uuidString,
+                                username: "andresg",
+                                fullname: "Andres Gonzalez",
+                                profileImageUrl: "",
+                                email: "andres@gmail.com"))
     }
 }
 
@@ -56,11 +67,14 @@ extension ProfileView{
                         .resizable()
                         .frame(width: 20, height: 16)
                         .foregroundColor(.white)
-                        .offset(x: 16, y: 12)
+                        .offset(x: 16, y: -4)
                 }//: BUTTON BACK
                 
-                Circle()
-                    .frame(width: 72, height: 72)
+                KFImage(URL(string: viewModel.user.profileImageUrl))
+                    .resizable()
+                    .scaledToFill()
+                    .clipShape(Circle())
+                    .frame(width: 72 , height: 72)
                     .offset(x:16, y:24)
             }//: VSTACK PROFILE PHOTO
         }//: ZSTACK
@@ -81,7 +95,7 @@ extension ProfileView{
             Button{
                 
             }label: {
-                Text("Edit Profile")
+                Text(viewModel.actionButtonTitle)
                     .font(.subheadline).bold()
                     .frame(width: 120, height: 32)
                     .foregroundColor(.black)
@@ -96,7 +110,7 @@ extension ProfileView{
     var userInfoDetails: some View{
         VStack(alignment: .leading, spacing: 4){
             HStack {
-                Text("Andres Gonzalez")
+                Text(viewModel.user.fullname)
                     .font(.title2)
                     .bold()
                 
@@ -104,7 +118,7 @@ extension ProfileView{
                     .foregroundColor(Color(.systemBlue))
             }//: HSTACK
             
-            Text("@aigonz")
+            Text(viewModel.user.username)
                 .font(.subheadline)
                 .foregroundColor(.gray)
             
@@ -172,8 +186,8 @@ extension ProfileView{
     var tweetsView: some View{
         ScrollView{
             LazyVStack{
-                ForEach(0 ... 9, id: \.self){_ in
-                    TweetRowView()
+                ForEach(viewModel.tweets(forFilter: self.selectedFilter)){ tweet in
+                    TweetRowView(tweet: tweet)
                         .padding()
                 }
             }//: LAZYVSTACK
